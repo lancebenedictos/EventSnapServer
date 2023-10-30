@@ -4,9 +4,11 @@ const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
-
+const errorHandler = require("./middleware/errorHandler");
 const app = express();
 const authRoutes = require("./routes/auth");
+const eventRoutes = require("./routes/events");
+const userRoutes = require("./routes/users");
 
 app.use(express.json(), cors(), cookieParser());
 app.use(
@@ -15,5 +17,9 @@ app.use(
   })
 );
 app.use("/api/auth", authRoutes);
+app.use("/api/events", eventRoutes);
+app.use("/api/users", userRoutes);
+
+app.use(errorHandler);
 
 app.listen(4000);

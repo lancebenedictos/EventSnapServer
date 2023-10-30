@@ -25,6 +25,10 @@ router.post("/register", async (req, res) => {
     .json({ data: { organizer } });
 });
 
+router.get("/logout", async (req, res) => {
+  return res.clearCookie("token").status(200).json({ message: "Success " });
+});
+
 router.post("/login", async (req, res) => {
   const emailCheck = await Organizer.findOne({ email: req.body.email });
   if (!emailCheck)
