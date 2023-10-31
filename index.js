@@ -9,6 +9,7 @@ const app = express();
 const authRoutes = require("./routes/auth");
 const eventRoutes = require("./routes/events");
 const userRoutes = require("./routes/users");
+const resourcesRoutes = require("./routes/resources");
 
 app.use(express.json(), cors(), cookieParser());
 app.use(
@@ -19,6 +20,7 @@ app.use(
 app.use("/api/auth", authRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/resources", resourcesRoutes);
 
 app.use(errorHandler);
 

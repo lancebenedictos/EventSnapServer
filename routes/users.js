@@ -1,18 +1,31 @@
 const router = require("express").Router();
 const asyncHandler = require("../middleware/asyncHandler");
+const Resource = require("../models/Resource");
 const {
   uploadFiles,
   uploadMiddleware,
   matchFaceInCollection,
   uploadThumbnail,
   indexImage,
+  findFaces,
 } = require("../libs/aws");
 const User = require("../models/User");
-// Get all images
-router.get("/", () => {});
+const Event = require("../models/Event");
 
 // Get specific persons images
-router.get("/:id", () => {});
+router.get(
+  "/:eventId/:userId",
+  asyncHandler(async (req, res) => {
+    const user = await User.findById(req.params.userId);
+    const resources = await findFaces(
+      req.params.eventId,
+      user.thumbnail._id.toString()
+    );
+    if (resources) {
+      return res.status(200).json({ data: { resources } });
+    }
+  })
+);
 
 router.post(
   "/:id",
@@ -25,9 +38,33 @@ router.post(
     );
 
     if (matches.length === 0) {
-      const resourceId = await uploadThumbnail(req.files[0], req.params.id);
-      await indexImage(req.files[0].buffer, req.params.id, resourceId, 1);
-      const user = await User.create({ thumbnail: resourceId });
+      // new face
+      const resource = new Resource();
+      const resourceId = resource._id.toString();
+      const location = await uploadThumbnail(
+        req.files[0],
+        req.params.id,
+        resourceId
+      );
+      const indexed = await indexImage(
+        req.files[0].buffer,
+        req.params.id,
+        resourceId,
+        1
+      );
+
+      resource.downloadUrl = location;
+      resource.faceId = indexed.FaceRecords[0].Face.FaceId;
+
+      const user = await User.create({
+        thumbnail: resourceId,
+      });
+      await resource.save();
+      await Event.updateOne(
+        { _id: req.params.id },
+        { $push: { users: user._id } }
+      );
+
       res.status(200).json({ data: { user } });
     }
   })

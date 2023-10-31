@@ -6,7 +6,13 @@ const router = require("express").Router();
 
 router.get("/", () => {});
 
-router.get("/:id", () => {});
+router.get(
+  "/:id",
+  asyncHandler(async (req, res) => {
+    const event = await Event.findById(req.params.id).populate("users");
+    return res.status(200).json({ data: { event } });
+  })
+);
 
 router.post(
   "/",
@@ -18,8 +24,10 @@ router.post(
       title,
       date,
     });
-    res.status(200).json({ data: { event } });
+
     createFaceCollection(event._id.toString());
+
+    res.status(200).json({ data: { event } });
   })
 );
 

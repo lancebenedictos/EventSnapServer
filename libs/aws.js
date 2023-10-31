@@ -67,7 +67,32 @@ const indexImage = async (image, collectionId, externalId, maxFaces) => {
 };
 
 const createFaceCollection = (eventId) => {
-  rekognition.createCollection({ CollectionId: eventId });
+  const promises = [];
+
+  // unique faces (registering new face)
+  promises.push(
+    new Promise((resolve, reject) => {
+      rekognition.createCollection({ CollectionId: eventId }, (err, data) => {
+        if (err) return reject(err);
+        resolve(data);
+      });
+    })
+  );
+
+  // all images
+  promises.push(
+    new Promise((resolve, reject) => {
+      rekognition.createCollection(
+        { CollectionId: `${eventId}-photos` },
+        (err, data) => {
+          if (err) return reject(err);
+          resolve(data);
+        }
+      );
+    })
+  );
+
+  return Promise.all(promises);
 };
 
 const uploadMiddleware = (req, res, next) => {
@@ -104,6 +129,7 @@ const uploadMiddleware = (req, res, next) => {
 };
 
 const uploadFiles = async (files, bucket, eventId) => {
+  const promises = [];
   files.forEach((file) => {
     const resource = new Resource();
 
@@ -112,19 +138,27 @@ const uploadFiles = async (files, bucket, eventId) => {
       Key: `${eventId}/${resource._id.toString()}.jpg`,
       Body: file.buffer,
     };
-
-    s3.upload(params, (err, data) => {
-      if (err) return;
-      const { Location } = data;
-      resource.downloadUrl = Location;
-      resource.save();
-    });
+    promises.push(
+      new Promise((resolve, reject) => {
+        s3.upload(params, (err, data) => {
+          if (err) return reject(err);
+          const { Location } = data;
+          resource.downloadUrl = Location;
+          indexImage(file.buffer, `${eventId}-photos`, resource._id.toString());
+          resource.save();
+          resolve();
+        });
+      })
+    );
   });
+
+  await Promise.all(promises);
+
+  return promises;
 };
 
-const uploadThumbnail = async (file, eventId) => {
-  const resource = new Resource();
-  const key = `${eventId}/${resource._id.toString()}.jpg`;
+const uploadThumbnail = async (file, eventId, resourceId) => {
+  const key = `${eventId}/${resourceId}.jpg`;
   const params = {
     Bucket: "event-thumbnails-1",
     Key: key,
@@ -135,12 +169,35 @@ const uploadThumbnail = async (file, eventId) => {
     s3.upload(params, (err, data) => {
       if (err) reject(err);
       const { Location } = data;
-      resource.downloadUrl = Location;
-      resource.save();
-      resolve(resource._id.toString());
+
+      resolve(Location);
     });
   });
   return promise;
+};
+
+const findFaces = async (eventId, id) => {
+  const getThumbnail = new Promise((resolve, reject) => {
+    s3.getObject(
+      {
+        Key: `${eventId}/${id}.jpg`,
+        Bucket: "event-thumbnails-1",
+      },
+      (err, data) => {
+        if (err) return reject(err);
+        resolve(data);
+      }
+    );
+  });
+  const thumbnail = await getThumbnail;
+
+  const matches = await matchFaceInCollection(
+    thumbnail.Body,
+    `${eventId}-photos`
+  );
+
+  const resourceIds = matches.map((res) => res.Face.ExternalImageId);
+  return await Resource.find({ _id: { $in: resourceIds } });
 };
 exports.uploadFiles = uploadFiles;
 exports.uploadMiddleware = uploadMiddleware;
@@ -148,3 +205,4 @@ exports.createFaceCollection = createFaceCollection;
 exports.matchFaceInCollection = matchFaceInCollection;
 exports.indexImage = indexImage;
 exports.uploadThumbnail = uploadThumbnail;
+exports.findFaces = findFaces;

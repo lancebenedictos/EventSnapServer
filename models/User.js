@@ -8,6 +8,16 @@ const UserSchema = new Schema({
     ref: "Resource",
   }, //thumbnail
 });
+
+UserSchema.pre("find", function (next) {
+  this.populate("thumbnail");
+  next();
+});
+
+UserSchema.pre("findOne", function (next) {
+  this.populate("thumbnail");
+  next();
+});
 const User = mongoose.model("User", UserSchema);
 
 module.exports = User;
