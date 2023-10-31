@@ -176,11 +176,11 @@ const uploadThumbnail = async (file, eventId, resourceId) => {
   return promise;
 };
 
-const findFaces = async (eventId, id) => {
-  const getThumbnail = new Promise((resolve, reject) => {
+const getImage = async (key) => {
+  return new Promise((resolve, reject) => {
     s3.getObject(
       {
-        Key: `${eventId}/${id}.jpg`,
+        Key: key,
         Bucket: "event-thumbnails-1",
       },
       (err, data) => {
@@ -189,7 +189,11 @@ const findFaces = async (eventId, id) => {
       }
     );
   });
-  const thumbnail = await getThumbnail;
+};
+
+const findFaces = async (eventId, id) => {
+  const key = `${eventId}/${id}.jpg`;
+  const thumbnail = await getImage(key);
 
   const matches = await matchFaceInCollection(
     thumbnail.Body,

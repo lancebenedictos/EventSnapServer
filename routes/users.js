@@ -2,7 +2,6 @@ const router = require("express").Router();
 const asyncHandler = require("../middleware/asyncHandler");
 const Resource = require("../models/Resource");
 const {
-  uploadFiles,
   uploadMiddleware,
   matchFaceInCollection,
   uploadThumbnail,
