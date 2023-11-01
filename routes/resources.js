@@ -1,6 +1,7 @@
 const router = require("express").Router();
+const { uploadFiles } = require("../libs/aws");
 const asyncHandler = require("../middleware/asyncHandler");
-const { uploadMiddleware, uploadFiles } = require("../libs/aws");
+const { uploadMiddleware } = require("../middleware/multer");
 
 router.post(
   "/:id",

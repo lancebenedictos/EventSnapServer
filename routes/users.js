@@ -2,7 +2,6 @@ const router = require("express").Router();
 const asyncHandler = require("../middleware/asyncHandler");
 const Resource = require("../models/Resource");
 const {
-  uploadMiddleware,
   matchFaceInCollection,
   uploadThumbnail,
   indexImage,
@@ -10,6 +9,7 @@ const {
 } = require("../libs/aws");
 const User = require("../models/User");
 const Event = require("../models/Event");
+const { uploadMiddleware } = require("../middleware/multer");
 
 // Get specific persons images
 router.get(
