@@ -22,7 +22,7 @@ router.post("/signup", async (req, res) => {
   organizer.password = null;
   res
     .status(200)
-    .cookie("token", token, { httpOnly: true })
+    .cookie("token", token, { httpOnly: true, secure: true })
     .json({ organizer });
 });
 
@@ -50,7 +50,7 @@ router.post("/login", async (req, res) => {
 
   return res
     .status(200)
-    .cookie("token", token, { httpOnly: true })
+    .cookie("token", token, { httpOnly: true, secure: true })
     .json({ organizer: emailCheck });
 });
 
