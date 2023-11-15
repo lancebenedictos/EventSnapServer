@@ -14,7 +14,7 @@ const resourcesRoutes = require("./routes/resources");
 app.use(express.json(), cookieParser());
 const origin =
   process.env.NODE_ENV === "production"
-    ? "https://eventsnap.vercel.app/"
+    ? "https://eventsnap.vercel.app"
     : "http://localhost:5173";
 app.use(cors({ origin, credentials: true }));
 
