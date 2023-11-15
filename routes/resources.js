@@ -8,7 +8,7 @@ router.post(
   uploadMiddleware,
   asyncHandler(async (req, res) => {
     await uploadFiles(req.files, "event-thumbnails-1", req.params.id);
-
+    console.log("hit");
     res.status(200).json({ message: "success" });
   })
 );

@@ -10,30 +10,21 @@ const {
 const User = require("../models/User");
 const Event = require("../models/Event");
 const { uploadMiddleware } = require("../middleware/multer");
+const { authenticate } = require("../middleware/auth");
 
 // Get specific persons images
-router.get(
-  "/:eventId/:userId",
-  asyncHandler(async (req, res) => {
-    const user = await User.findById(req.params.userId);
-    const resources = await findFaces(
-      req.params.eventId,
-      user.thumbnail._id.toString()
-    );
-    if (resources) {
-      return res.status(200).json({ data: { resources } });
-    }
-  })
-);
 
 router.post(
-  "/:id",
+  "/:eventId/thumbnail",
   uploadMiddleware,
   asyncHandler(async (req, res) => {
     // use rekognition first if face is registered
+
+    console.log("hit");
+
     const matches = await matchFaceInCollection(
       req.files[0].buffer,
-      req.params.id
+      req.params.eventId
     );
 
     if (matches.length === 0) {
@@ -42,12 +33,12 @@ router.post(
       const resourceId = resource._id.toString();
       const location = await uploadThumbnail(
         req.files[0],
-        req.params.id,
+        req.params.eventId,
         resourceId
       );
       const indexed = await indexImage(
         req.files[0].buffer,
-        req.params.id,
+        req.params.eventId,
         resourceId,
         1
       );
@@ -59,18 +50,38 @@ router.post(
         thumbnail: resourceId,
       });
       await resource.save();
-      await Event.updateOne(
-        { _id: req.params.id },
-        { $push: { users: user._id } }
-      );
+      const event = await Event.findOneAndUpdate(
+        { _id: req.params.eventId },
+        { $push: { users: user._id } },
+        { new: true }
+      ).populate("users");
 
-      res.status(200).json({ data: { user } });
+      res.status(200).json({ event });
+    }
+  })
+);
+
+router.get(
+  "/:eventId/images/:userId",
+  asyncHandler(async (req, res) => {
+    const user = await User.findById(req.params.userId);
+    console.log(user);
+    const resources = await findFaces(
+      req.params.eventId,
+      user.thumbnail._id.toString()
+    );
+
+    console.log(resources);
+
+    if (resources) {
+      return res.status(200).json({ resources });
     }
   })
 );
 
 // add new
-router.put("/:id", () => {});
+// router.put("/:id", () => {});
 
 router.delete("/:id", () => {});
+
 module.exports = router;

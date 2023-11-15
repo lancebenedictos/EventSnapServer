@@ -5,7 +5,7 @@ const OrganizerSchema = new Schema({
   first_name: String,
   last_name: String,
   email: { type: String, unique: true },
-  password: String,
+  password: { type: String, select: false },
 });
 const Organizer = mongoose.model("Organizer", OrganizerSchema);
 
