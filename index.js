@@ -12,7 +12,11 @@ const userRoutes = require("./routes/users");
 const resourcesRoutes = require("./routes/resources");
 
 app.use(express.json(), cookieParser());
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+const origin =
+  process.env.NODE_ENV === "production"
+    ? "https://eventsnap.vercel.app/"
+    : "http://localhost:5173";
+app.use(cors({ origin, credentials: true }));
 
 app.use(
   bodyParser.urlencoded({
