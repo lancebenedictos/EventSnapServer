@@ -26,4 +26,4 @@ app.use("/api/resources", resourcesRoutes);
 
 app.use(errorHandler);
 
-app.listen(4000);
+app.listen(process.env.PORT || 4000);
